@@ -29,7 +29,7 @@ export const isCardTouched = (card: CardInterface, touches: TouchData[]) => {
 
 export const flipCard = (card: CardInterface) => {
   "worklet";
-  const duration = 300;
+  const duration = 200;
   const defaultXPosition = calcXCardPositionWorklet(card.idx);
   if (card.x.value !== defaultXPosition) {
     return;
@@ -54,6 +54,19 @@ export const flipCard = (card: CardInterface) => {
   );
 };
 
+export const deckCard = (card: CardInterface) => {
+  "worklet";
+  const duration = 600;
+
+  card.x.value = withTiming(C.DECK_POSITION_X, {
+    duration,
+    easing: Easing.cubic,
+  });
+  card.y.value = withTiming(C.DECK_POSITION_Y + 50, {
+    duration,
+    easing: Easing.cubic,
+  });
+};
 type TWENTY_LENGTH_ARRAY = [
   number,
   number,

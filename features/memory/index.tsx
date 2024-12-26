@@ -7,10 +7,15 @@ import {
 } from "@shopify/react-native-skia";
 import { View, StyleSheet } from "react-native";
 import type { CardInterface } from "./type";
-import { useDerivedValue, useSharedValue } from "react-native-reanimated";
+import {
+  interpolate,
+  useDerivedValue,
+  useSharedValue,
+} from "react-native-reanimated";
 import {
   calcXCardPosition,
   calcYCardPosition,
+  deckCard,
   flipCard,
   generateAndShuffleArray,
   isCardTouched,
@@ -22,19 +27,29 @@ import {
   Gesture,
 } from "react-native-gesture-handler";
 
+import { setAnimatedTimeout, clearAnimatedTimeout } from "./utils";
+
 const CardText = ({ card, font }: { card: CardInterface; font: SkFont }) => {
   const text = card.value.toString();
   const textWidth = font.measureText(text).width;
   const textHeight = font.getSize();
-  const x = card.x.value + C.CARD_SIZE / 2 - textWidth / 2;
-  const y = card.y.value + C.CARD_SIZE / 2 + textHeight / 2;
+  const x = useDerivedValue(
+    () => card.x.value + C.CARD_SIZE / 2 - textWidth / 2,
+  );
+  const y = useDerivedValue(
+    () => card.y.value + C.CARD_SIZE / 2 + textHeight / 2,
+  );
+
+  const opacity = useDerivedValue(() =>
+    interpolate(card.isFlipped.value, [0.5, 1], [0, 1]),
+  );
   return (
     <Text
       x={x}
       y={y}
       font={font}
       text={text}
-      opacity={card.isFlipped}
+      opacity={opacity}
       color={"white"}
     />
   );
@@ -42,7 +57,6 @@ const CardText = ({ card, font }: { card: CardInterface; font: SkFont }) => {
 
 const Card = ({ card }: { card: CardInterface }) => {
   const color = useDerivedValue(() => {
-    console.log(card.isFlipped.value, "flipped");
     return card.isFlipped.value > 0.5 ? "red" : "white";
   });
   return (
@@ -57,7 +71,7 @@ const Card = ({ card }: { card: CardInterface }) => {
 };
 
 export function Memory() {
-  const flippedCards = useSharedValue(0);
+  const flippedCards = useSharedValue<number[]>([]);
   const font = useFont(require("../../assets/fonts/SpaceMono-Regular.ttf"), 24);
   const shuffleArray = generateAndShuffleArray();
   const cards: CardInterface[] = Array(C.CARDS_TOTAL)
@@ -81,11 +95,37 @@ export function Memory() {
     });
 
   const gesture = Gesture.Tap().onTouchesUp((e) => {
+    let timeoutID: number | null = null;
     for (const card of cards) {
       if (isCardTouched(card, e.allTouches)) {
-        flipCard(card);
+        if (card.isFlipped.value < 1 && flippedCards.value.length < 2) {
+          flipCard(card);
+          flippedCards.value = [...flippedCards.value, card.id];
+        }
       }
     }
+
+    if (flippedCards.value.length === 2) {
+      const [first, second] = flippedCards.value.map((id) =>
+        cards.find((x) => x.id === id),
+      );
+      if (!first || !second) throw new Error("Should have card in map");
+      if (first.value === second.value) {
+        setAnimatedTimeout(() => {
+          deckCard(first);
+          deckCard(second);
+        }, 1000);
+      } else {
+        timeoutID = setAnimatedTimeout(() => {
+          flipCard(first);
+          flipCard(second);
+        }, 1000);
+      }
+      flippedCards.value = [];
+    }
+    return () => {
+      if (timeoutID) clearAnimatedTimeout(timeoutID);
+    };
   });
 
   return (
