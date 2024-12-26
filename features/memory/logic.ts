@@ -4,16 +4,18 @@ import * as C from "./constants";
 import { withSequence, withTiming, Easing } from "react-native-reanimated";
 
 export const calcXCardPosition = (idx: number) => {
-  return C.CARD_DEFAULT_POSITION * (idx % C.CARDS_ROW_LENGTH);
+  return C.CARD_DEFAULT_POSITION * (idx % C.CARDS_ROW_LENGTH) + C.PADDING;
 };
 
 export const calcYCardPosition = (idx: number) => {
-  return C.CARD_DEFAULT_POSITION * Math.floor(idx / C.CARDS_ROW_LENGTH) + 100;
+  return (
+    C.CARD_DEFAULT_POSITION * Math.floor(idx / C.CARDS_ROW_LENGTH) + C.PADDING
+  );
 };
 
 export const calcXCardPositionWorklet = (idx: number) => {
   "worklet";
-  return C.CARD_DEFAULT_POSITION * (idx % C.CARDS_ROW_LENGTH);
+  return C.CARD_DEFAULT_POSITION * (idx % C.CARDS_ROW_LENGTH) + C.PADDING;
 };
 
 export const isCardTouched = (card: CardInterface, touches: TouchData[]) => {

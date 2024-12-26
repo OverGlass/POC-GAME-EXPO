@@ -1,6 +1,6 @@
 import {
   Canvas,
-  Rect,
+  RoundedRect,
   SkFont,
   Text,
   useFont,
@@ -27,7 +27,8 @@ import {
   Gesture,
 } from "react-native-gesture-handler";
 
-import { setAnimatedTimeout, clearAnimatedTimeout } from "./utils";
+import { setAnimatedTimeout } from "./utils";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CardText = ({ card, font }: { card: CardInterface; font: SkFont }) => {
   const text = card.value.toString();
@@ -60,13 +61,14 @@ const Card = ({ card }: { card: CardInterface }) => {
     return card.isFlipped.value > 0.5 ? "red" : "white";
   });
   return (
-    <Rect
+    <RoundedRect
+      r={10}
       x={card.x}
       y={card.y}
       width={card.width}
       height={card.height}
       color={color}
-    ></Rect>
+    ></RoundedRect>
   );
 };
 
@@ -74,6 +76,7 @@ export function Memory() {
   const flippedCards = useSharedValue<number[]>([]);
   const font = useFont(require("../../assets/fonts/SpaceMono-Regular.ttf"), 24);
   const shuffleArray = generateAndShuffleArray();
+  const insets = useSafeAreaInsets();
   const cards: CardInterface[] = Array(C.CARDS_TOTAL)
     .fill(0)
     .map((_, idx) => {
@@ -95,7 +98,6 @@ export function Memory() {
     });
 
   const gesture = Gesture.Tap().onTouchesUp((e) => {
-    let timeoutID: number | null = null;
     for (const card of cards) {
       if (isCardTouched(card, e.allTouches)) {
         if (card.isFlipped.value < 1 && flippedCards.value.length < 2) {
@@ -116,22 +118,19 @@ export function Memory() {
           deckCard(second);
         }, 1000);
       } else {
-        timeoutID = setAnimatedTimeout(() => {
+        setAnimatedTimeout(() => {
           flipCard(first);
           flipCard(second);
         }, 1000);
       }
       flippedCards.value = [];
     }
-    return () => {
-      if (timeoutID) clearAnimatedTimeout(timeoutID);
-    };
   });
 
   return (
     <GestureHandlerRootView>
       <GestureDetector gesture={gesture}>
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingTop: insets.top }]}>
           <Canvas style={{ flex: 1 }}>
             {cards.map((x) => (
               <Card card={x} key={x.id} />
