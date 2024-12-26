@@ -3,6 +3,7 @@ import {
   RoundedRect,
   SkFont,
   Text,
+  Shadow,
   useFont,
 } from "@shopify/react-native-skia";
 import { View, StyleSheet } from "react-native";
@@ -58,7 +59,7 @@ const CardText = ({ card, font }: { card: CardInterface; font: SkFont }) => {
 
 const Card = ({ card }: { card: CardInterface }) => {
   const color = useDerivedValue(() => {
-    return card.isFlipped.value > 0.5 ? "red" : "white";
+    return card.isFlipped.value > 0.5 ? "lightcoral" : "lightblue";
   });
   return (
     <RoundedRect
@@ -68,7 +69,10 @@ const Card = ({ card }: { card: CardInterface }) => {
       width={card.width}
       height={card.height}
       color={color}
-    ></RoundedRect>
+    >
+      <Shadow dx={2} dy={2} blur={3} color="#93b8c4" />
+      {/* <Shadow dx={-12} dy={-12} blur={25} color="#c7f8ff" /> */}
+    </RoundedRect>
   );
 };
 
